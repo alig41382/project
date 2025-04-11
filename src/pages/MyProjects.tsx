@@ -11,6 +11,14 @@ import { FaTrash } from "react-icons/fa";
 import { getUserProject, deleteProject } from "../API";
 import { useNotification } from "../Notification/NotificationProvider";
 
+// Define the Project interface
+interface Project {
+  project_id: string | number; // Adjust based on your API
+  title: string;
+  description: string;
+  tags: { id: string | number; name: string }[];
+}
+
 // Card animation variants
 const cardVariants = {
   hidden: { opacity: 0, scale: 0.8, rotateX: 90 },
@@ -54,11 +62,13 @@ const backdropVariants = {
 const MyProjects = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [projects, setProjects] = useState([]);
+  const [projects, setProjects] = useState<Project[]>([]); // Typed as Project array
   const [totalProjects, setTotalProjects] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [projectToDelete, setProjectToDelete] = useState(null);
+  const [projectToDelete, setProjectToDelete] = useState<
+    null | string | number
+  >(null); // Typed for project_id
   const projectsPerPage = 4;
 
   const { success, error } = useNotification();
@@ -84,8 +94,8 @@ const MyProjects = () => {
         data
       );
 
-      const projectData = data.projects || [];
-      const totalCount = data.total || 0;
+      const projectData: Project[] = data.projects || []; // Type assertion
+      const totalCount: number = data.total || 0;
 
       setProjects(projectData);
       setTotalProjects(totalCount);
@@ -95,7 +105,7 @@ const MyProjects = () => {
         console.log(`Page ${page} is empty, navigating to page ${page - 1}`);
         setCurrentPage(page - 1);
       }
-    } catch (err:any) {
+    } catch (err: any) {
       console.error("Error fetching projects:", err);
       error(
         "خطا در بارگذاری پروژه‌ها: " +
@@ -118,7 +128,7 @@ const MyProjects = () => {
   }, [currentPage]);
 
   // Function to handle project deletion
-  const handleDeleteProject = (projectId:any) => {
+  const handleDeleteProject = (projectId: string | number) => {
     setProjectToDelete(projectId);
     setShowModal(true);
   };
@@ -131,7 +141,7 @@ const MyProjects = () => {
         success("پروژه با موفقیت حذف شد!");
         // Refresh the project list by re-fetching from the API
         await fetchProjects(currentPage);
-      } catch (err:any) {
+      } catch (err: any) {
         console.error("Error deleting project:", err);
         error(
           "خطا در حذف پروژه: " + (err.message || "لطفاً دوباره تلاش کنید.")
@@ -163,7 +173,7 @@ const MyProjects = () => {
     }
   };
 
-  const goToPage = (pageNumber:any) => {
+  const goToPage = (pageNumber: number) => {
     setCurrentPage(pageNumber);
   };
 
@@ -261,7 +271,7 @@ const MyProjects = () => {
                         </p>
                       </div>
                       <div className="flex flex-wrap w-3/4 gap-2 mt-3">
-                        {project.tags.slice(0, 2).map((tag:any) => (
+                        {project.tags.slice(0, 2).map((tag) => (
                           <span
                             key={tag.id}
                             className="bg-white/30 text-white text-xs px-3 py-1 rounded-full glowing-shadow"
@@ -311,9 +321,9 @@ const MyProjects = () => {
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="url(#grad1)"
-                  stroke-width="1.25"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="1.25"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   className="lucide lucide-folder-open-icon lucide-folder-open"
                 >
                   <defs>
@@ -324,13 +334,8 @@ const MyProjects = () => {
                       x2="100%"
                       y2="0%"
                     >
-                      <stop offset="0%" style={{ stopColor: "#2563EB" }} />{" "}
-                      {/* blue-600 */}
-                      <stop
-                        offset="100%"
-                        style={{ stopColor: "#9333EA" }}
-                      />{" "}
-                      {/* purple-600 */}
+                      <stop offset="0%" style={{ stopColor: "#2563EB" }} />
+                      <stop offset="100%" style={{ stopColor: "#9333EA" }} />
                     </linearGradient>
                   </defs>
                   <path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2" />
@@ -392,7 +397,9 @@ const MyProjects = () => {
         </AnimatePresence>
 
         <footer
-          className={`bg-[#F7F7F7] ltr place-items-center ${currentProjects.length === 0 ? "" : "border-t border-gray-200 "}  self-center p-4 w-full relative z-10 transition-all duration-400 sm:pr-24 pr-4 pl-4 ${
+          className={`bg-[#F7F7F7] ltr place-items-center ${
+            currentProjects.length === 0 ? "" : "border-t border-gray-200 "
+          } self-center p-4 w-full relative z-10 transition-all duration-400 sm:pr-24 pr-4 pl-4 ${
             isSidebarOpen ? "md:pr-52" : "md:pr-28"
           }`}
         >
@@ -415,7 +422,7 @@ const MyProjects = () => {
 
             {currentProjects.length > 0 ? (
               <div className="flex items-center gap-2">
-                {/* دکمه صفحه اول */}
+                {/* First page button */}
                 {currentPage > 2 && (
                   <motion.button
                     key={1}
@@ -429,10 +436,10 @@ const MyProjects = () => {
                   </motion.button>
                 )}
 
-                {/* علامت ... اگه فاصله بیشتر از 1 باشه */}
+                {/* Ellipsis if gap is more than 1 */}
                 {currentPage > 3 && <span className="text-gray-700">...</span>}
 
-                {/* صفحه قبلی (اگه وجود داشته باشه) */}
+                {/* Previous page (if exists) */}
                 {currentPage > 1 && (
                   <motion.button
                     key={currentPage - 1}
@@ -446,7 +453,7 @@ const MyProjects = () => {
                   </motion.button>
                 )}
 
-                {/* صفحه فعلی */}
+                {/* Current page */}
                 <motion.button
                   key={currentPage}
                   variants={buttonVariants}
@@ -458,7 +465,7 @@ const MyProjects = () => {
                   {currentPage}
                 </motion.button>
 
-                {/* صفحه بعدی (اگه وجود داشته باشه) */}
+                {/* Next page (if exists) */}
                 {currentPage < totalPages && (
                   <motion.button
                     key={currentPage + 1}
@@ -472,12 +479,12 @@ const MyProjects = () => {
                   </motion.button>
                 )}
 
-                {/* علامت ... اگه فاصله تا آخر بیشتر از 1 باشه */}
+                {/* Ellipsis if gap to last page is more than 1 */}
                 {currentPage < totalPages - 2 && (
                   <span className="text-gray-700">...</span>
                 )}
 
-                {/* دکمه صفحه آخر */}
+                {/* Last page button */}
                 {currentPage < totalPages - 1 && (
                   <motion.button
                     key={totalPages}
@@ -503,7 +510,7 @@ const MyProjects = () => {
               disabled={
                 currentPage === totalPages || currentProjects.length === 0
               }
-              className={`flex items-center justify-center gap-2 w-24 h-10 rounded-full text-white text-sm font-medium glowing-shadow bg-gradient-to-r from-blue-500 to-purple-600  ${
+              className={`flex items-center justify-center gap-2 w-24 h-10 rounded-full text-white text-sm font-medium glowing-shadow bg-gradient-to-r from-blue-500 to-purple-600 ${
                 currentPage === totalPages || currentProjects.length === 0
                   ? "cursor-not-allowed"
                   : "hover:bg-gray-100 transition-colors cursor-pointer"
